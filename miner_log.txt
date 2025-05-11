@@ -1,0 +1,97 @@
+[*] Connection verified. Generating DAG...
+[*] DAG ready. Waiting for job...
+[*] Launching GPU mining job: 000005be
+[GPU] Trying nonce: 5120
+[GPU] Trying nonce: 2560
+[GPU] Trying nonce: 0
+[GPU] Trying nonce: 7680
+[GPU] Trying nonce: 12800
+[GPU] Trying nonce: 10240
+[GPU] Trying nonce: 15360
+[+] GPU found valid nonce: 7810
+[*] Nonce found: 7810. Submitting share...
+[DEBUG] Job ID: 000005be
+[DEBUG] Nonce: 7810
+[DEBUG] Nonce LE: 821e000000000000
+[DEBUG] Header: 9feb74c9280f9a061602aa404110a63a5189d68198ed092097ffd304b7e7c45f
+[DEBUG] Hash: b3e9fe197edb06c2eddb490de2a7704cf15ecdd1a7bd1e622d2bdf419f9465c1
+[DEBUG] Target: 72370055773322622139731865630429942408293740416025352524660990004904
+[-] Rejected by target difficulty
+[GPU] Temp: 45°C, Power: 23.100000W, Util: 2%, Clock: 1200 MHz
+[SUMMARY] Accepted: 0 | Rejected: 1
+[*] Launching GPU mining job: 000005bf
+[GPU] Trying nonce: 5120
+[GPU] Trying nonce: 0
+[GPU] Trying nonce: 2560
+[GPU] Trying nonce: 7680
+[GPU] Trying nonce: 12800
+[GPU] Trying nonce: 10240
+[GPU] Trying nonce: 15360
+[+] GPU found valid nonce: 128
+[*] Nonce found: 80. Submitting share...
+[DEBUG] Job ID: 000005bf
+[DEBUG] Nonce: 80
+[DEBUG] Nonce LE: 8000000000000000
+[DEBUG] Header: 87931e441ba1296210388eed9033d3cefab59d246dc5271d83a9811c6cddc5d9
+[DEBUG] Hash: a2fdd80a98e7727bc62bf421035cb07f243df0079ec7980b653bdbf7a37d776b
+[DEBUG] Target: 72370055773322622139731865630429942408293740416025352524660990004904
+[-] Rejected by target difficulty
+[GPU] Temp: 45°C, Power: 23.110001W, Util: 4%, Clock: 1200 MHz
+[SUMMARY] Accepted: 0 | Rejected: 2
+[*] Launching GPU mining job: 000005c0
+[GPU] Trying nonce: 5120
+[GPU] Trying nonce: 2560
+[GPU] Trying nonce: 0
+[GPU] Trying nonce: 7680
+[GPU] Trying nonce: 12800
+[GPU] Trying nonce: 10240
+[GPU] Trying nonce: 15360
+[+] GPU found valid nonce: 7808
+[*] Nonce found: 1e80. Submitting share...
+[DEBUG] Job ID: 000005c0
+[DEBUG] Nonce: 1e80
+[DEBUG] Nonce LE: 801e000000000000
+[DEBUG] Header: 40d3ed89975189ed5cbf771a73c15db4ea63072f8d278dea1112be559b2220e4
+[DEBUG] Hash: e2d0fc138d5ab3b66bbb636a04bfe9f1fcb69239d1e4e551f8b69632b9a066a0
+[DEBUG] Target: 72370055773322622139731865630429942408293740416025352524660990004904
+[-] Rejected by target difficulty
+[GPU] Temp: 45°C, Power: 23.110001W, Util: 0%, Clock: 1200 MHz
+[SUMMARY] Accepted: 0 | Rejected: 3
+[*] Launching GPU mining job: 000005c1
+[GPU] Trying nonce: 5120
+[GPU] Trying nonce: 2560
+[GPU] Trying nonce: 0
+[GPU] Trying nonce: 7680
+[GPU] Trying nonce: 12800
+[GPU] Trying nonce: 10240
+[GPU] Trying nonce: 15360
+[+] GPU found valid nonce: 5248
+[*] Nonce found: 1480. Submitting share...
+[DEBUG] Job ID: 000005c1
+[DEBUG] Nonce: 1480
+[DEBUG] Nonce LE: 8014000000000000
+[DEBUG] Header: d1d9bb03b4e2b46d664187bbff9c6a23af8e0b24bfc263815e17ee4a6e27cf19
+[DEBUG] Hash: b11c7b9e2ec382b3360a1117d41d496d404ef96f43c823c65ac2715ce15e85ec
+[DEBUG] Target: 72370055773322622139731865630429942408293740416025352524660990004904
+[-] Rejected by target difficulty
+[GPU] Temp: 45°C, Power: 23.100000W, Util: 0%, Clock: 1200 MHz
+[SUMMARY] Accepted: 0 | Rejected: 4
+[*] Launching GPU mining job: 000005c2
+[GPU] Trying nonce: 5120
+[GPU] Trying nonce: 2560
+[GPU] Trying nonce: 0
+[GPU] Trying nonce: 7680
+[GPU] Trying nonce: 12800
+[GPU] Trying nonce: 10240
+[GPU] Trying nonce: 15360
+[+] GPU found valid nonce: 5248
+[*] Nonce found: 1480. Submitting share...
+[DEBUG] Job ID: 000005c2
+[DEBUG] Nonce: 1480
+[DEBUG] Nonce LE: 8014000000000000
+[DEBUG] Header: 10d6efcd9fb46c59a6fe44d8d73c380e95db44ecbee1b2a1c7a0ac7d4810d830
+[DEBUG] Hash: 9fc58dfc3890b6ffc2c78887e4bdba173859aafdc31cb603b4be547832af601d
+[DEBUG] Target: 72370055773322622139731865630429942408293740416025352524660990004904
+[-] Rejected by target difficulty
+[GPU] Temp: 45°C, Power: 23.090000W, Util: 0%, Clock: 1200 MHz
+[SUMMARY] Accepted: 0 | Rejected: 5
