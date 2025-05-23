@@ -1,14 +1,27 @@
-#ifndef AUTOLOKYOS2_CUDA_MINER_H
-#define AUTOLOKYOS2_CUDA_MINER_H
+#ifndef AUTOLYKOS2_CUDA_MINER_CUH
+#define AUTOLYKOS2_CUDA_MINER_CUH
 
-#include <cstdint>
-#include <vector>
-#include <array>
+#include <stdint.h>
 
-uint64_t launch_gpu_miner(
-    const std::vector<std::array<uint8_t, 32>>& dag,
-    const std::vector<uint8_t>& header,
-    const std::vector<uint8_t>& target
+#ifdef __CUDACC__
+extern "C" {
+#endif
+
+// Host function to launch mining kernel
+bool launchMiningKernel(
+    const uint8_t* header,
+    const uint8_t* target,
+    uint64_t nonceStart,
+    uint64_t nonceRange,
+    uint64_t& foundNonce,
+    uint8_t* foundHash
 );
 
-#endif // AUTOLOKYOS2_CUDA_MINER_H
+// Device-side Blake2b
+void blake2b_cuda(uint8_t* out, const uint8_t* in, size_t inlen);
+
+#ifdef __CUDACC__
+}
+#endif
+
+#endif // AUTOLYKOS2_CUDA_MINER_CUH

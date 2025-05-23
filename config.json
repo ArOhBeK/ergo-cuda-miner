@@ -1,0 +1,12 @@
+{
+  "mode": "pool",
+  "pool": {
+    "host": "pool.us.woolypooly.com",
+    "port": 3100
+  },
+  "solo": {
+    "host": "127.0.0.1",
+    "port": 3333
+  },
+  "address": "9h3dCuaU9BkyriZi2EG4xDagckZ1vGiT8xpXwdvvGtWkH9FnhgZ"
+}

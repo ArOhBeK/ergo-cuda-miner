@@ -1,38 +1,46 @@
-#include <cuda_runtime.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>     // <-- Add this for PRIu64
+#include "blake2b_cuda.cuh"
+#include "utils.h"        // <-- Use the shared inline here!
 
-// CUDA kernel to simulate finding a valid nonce
-__global__ void mine_kernel(uint64_t nonce_start, uint64_t *found_nonce, int *found_flag) {
-    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+// REMOVE isHashLessThanTarget from here!
+// It's now in utils.h
 
-    // Force success on first thread
-    if (idx == 0) {
-        *found_nonce = nonce_start + idx;
-        *found_flag = 1;
-        printf("GPU: Thread %d found nonce %llu\\n", idx, *found_nonce);
+__global__ void mine_kernel(
+    const uint8_t* header,
+    const uint8_t* target,
+    uint64_t nonce_start,
+    uint64_t nonce_range,
+    uint64_t* found_nonce,
+    int* found_flag,
+    uint8_t* output_hash
+) {
+    uint64_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    uint64_t total_threads = gridDim.x * blockDim.x;
+    uint64_t nonce = nonce_start + thread_id;
+
+    while (nonce < nonce_start + nonce_range) {
+        if (*found_flag) return;
+
+        uint8_t input[40];
+        for (int i = 0; i < 32; i++) input[i] = header[i];
+        for (int i = 0; i < 8; i++) input[32 + i] = (nonce >> (8 * i)) & 0xFF;
+
+        uint8_t hash[32];
+        blake2b_gpu(hash, input, 40);
+
+        if (isHashLessThanTarget(hash, target)) {
+            if (atomicExch(found_flag, 1) == 0) {
+                *found_nonce = nonce;
+                for (int i = 0; i < 32; i++) output_hash[i] = hash[i];
+                // Use PRIu64 for portable printf of uint64_t
+                printf("[GPU] Valid nonce found: %" PRIu64 "\n", (uint64_t)nonce);
+            }
+            return;
+        }
+
+        nonce += total_threads;
     }
 }
 
-// Kernel launcher from host
-extern "C" void launch_kernel(uint64_t nonce_start, uint64_t *result_nonce, int *result_flag) {
-    uint64_t *d_nonce;
-    int *d_flag;
-
-    // Use unified memory so we can read/write from both CPU and GPU
-    cudaMallocManaged(&d_nonce, sizeof(uint64_t));
-    cudaMallocManaged(&d_flag, sizeof(int));
-
-    *d_flag = 0;
-
-    // Launch kernel
-    mine_kernel<<<1, 256>>>(nonce_start, d_nonce, d_flag);
-    cudaDeviceSynchronize();
-
-    // Copy results to output params
-    *result_nonce = *d_nonce;
-    *result_flag = *d_flag;
-
-    cudaFree(d_nonce);
-    cudaFree(d_flag);
-}

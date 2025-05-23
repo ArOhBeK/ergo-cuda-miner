@@ -1,5 +1,9 @@
-#include "stratum_client.h"
+extern "C" {
 #include "blake2b.h"
+}
+
+#include "stratum_client.h"
+#include "utils.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -7,6 +11,24 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <gmp.h>
+#include <vector>
+#include <string>
+
+std::vector<uint8_t> decimal_to_target_bytes(const std::string& decimal) {
+    mpz_t target_int;
+    mpz_init(target_int);
+    mpz_set_str(target_int, decimal.c_str(), 10);
+    uint8_t buf[32] = {0};
+    size_t count = 0;
+    mpz_export(buf, &count, 1, 1, 1, 0, target_int);
+    std::vector<uint8_t> out(32, 0);
+    if (count > 0) {
+        memcpy(out.data() + (32 - count), buf, count);
+    }
+    mpz_clear(target_int);
+    return out;
+}
 
 StratumClient::StratumClient(const std::string& host, int port, const std::string& address)
     : pool_host(host), pool_port(port), miner_address(address), sockfd(-1), accepted_shares(0), rejected_shares(0) {}
@@ -21,7 +43,6 @@ bool StratumClient::connect_to_pool() {
         std::cerr << "[-] getaddrinfo failed\n";
         return false;
     }
-
     for (auto ai = res; ai != nullptr; ai = ai->ai_next) {
         sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
         if (sockfd < 0) continue;
@@ -29,7 +50,6 @@ bool StratumClient::connect_to_pool() {
         ::close(sockfd);
         sockfd = -1;
     }
-
     freeaddrinfo(res);
     return sockfd != -1;
 }
@@ -75,7 +95,17 @@ bool StratumClient::wait_for_job(Job& job) {
         auto p = j["params"];
         job.job_id = p[0];
         job.header_hash = hex_to_bytes(p[2]);
-        job.target_difficulty = hex_to_bytes(p[6]);
+
+        // WoolyPooly: [6]=block target, [7]=share difficulty
+        std::string block_target_str = p[6];
+        std::string share_diff_str = (p.size() > 7) ? p[7].get<std::string>() : "";
+
+        job.block_target = decimal_to_target_bytes(block_target_str);
+        if (!share_diff_str.empty() && share_diff_str != "null") {
+            job.share_target = decimal_to_target_bytes(share_diff_str);
+        } else {
+            job.share_target = job.block_target;
+        }
         return true;
     }
     return false;
@@ -95,23 +125,6 @@ void StratumClient::submit_share(const std::string& job_id, uint64_t nonce, cons
     uint8_t hash_output[32];
     blake2b(hash_output, 32, input.data(), input.size(), nullptr, 0);
 
-    std::cout << "[DEBUG] Job ID: " << job_id << "\n";
-    std::cout << "[DEBUG] Nonce: " << nonce << "\n";
-    std::cout << "[DEBUG] Nonce LE: " << bytes_to_hex(nonce_le) << "\n";
-    std::cout << "[DEBUG] Header: " << bytes_to_hex(job.header_hash) << "\n";
-    std::cout << "[DEBUG] Hash: ";
-    for (int i = 0; i < 32; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)hash_output[i];
-    std::cout << "\n";
-    std::cout << "[DEBUG] Target: " << bytes_to_hex(job.target_difficulty) << "\n";
-
-    if (memcmp(hash_output, job.target_difficulty.data(), 32) >= 0) {
-        std::cout << "[-] Rejected by target difficulty\n";
-        ++rejected_shares;
-        std::cout << get_gpu_stats();
-        std::cout << "[SUMMARY] Accepted: " << accepted_shares << " | Rejected: " << rejected_shares << "\n";
-        return;
-    }
-
     nlohmann::json share = {
         {"id", 4},
         {"jsonrpc", "2.0"},
@@ -125,14 +138,12 @@ void StratumClient::submit_share(const std::string& job_id, uint64_t nonce, cons
     read_line(response);
     std::cout << "[>] Share response: " << response << std::endl;
 
-    if (response.find("\"error\":null") != std::string::npos || response.find("\"result\":true") != std::string::npos) {
+    if (response.find("\"error\":null") != std::string::npos ||
+        response.find("\"result\":true") != std::string::npos) {
         ++accepted_shares;
     } else {
         ++rejected_shares;
     }
-
-    std::cout << get_gpu_stats();
-    std::cout << "[SUMMARY] Accepted: " << accepted_shares << " | Rejected: " << rejected_shares << "\n";
 }
 
 std::vector<uint8_t> StratumClient::hex_to_bytes(const std::string& hex) {
@@ -152,30 +163,15 @@ std::string StratumClient::bytes_to_hex(const std::vector<uint8_t>& bytes) {
 }
 
 std::string StratumClient::get_gpu_stats() {
-    FILE* pipe = popen("/usr/bin/nvidia-smi --query-gpu=temperature.gpu,power.draw,utilization.gpu,clocks.sm --format=csv,noheader,nounits", "r");
-    if (!pipe) return "[GPU] Failed to get GPU stats.\n";
-
+    FILE* pipe = popen("/usr/bin/nvidia-smi --query-gpu=temperature.gpu,fan.speed,power.draw,utilization.gpu,clocks.gr --format=csv,noheader,nounits", "r");
+    if (!pipe) return "[GPU] Failed to get stats.";
     char buffer[256];
-    std::string stats = "[GPU] ";
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        std::istringstream iss(buffer);
-        int temp, util, clock;
-        float power;
-        iss >> temp;
-        iss.ignore(); // ,
-        iss >> power;
-        iss.ignore(); // ,
-        iss >> util;
-        iss.ignore(); // ,
-        iss >> clock;
-
-        stats += "Temp: " + std::to_string(temp) + "°C, ";
-        stats += "Power: " + std::to_string(power) + "W, ";
-        stats += "Util: " + std::to_string(util) + "%, ";
-        stats += "Clock: " + std::to_string(clock) + " MHz\n";
+    std::string result = "[GPU] ";
+    while (fgets(buffer, sizeof(buffer), pipe)) {
+        result += buffer;
     }
     pclose(pipe);
-    return stats;
+    return result;
 }
 
 void StratumClient::close() {
