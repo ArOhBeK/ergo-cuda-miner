@@ -1,19 +1,26 @@
 #include "utils.h"
+#include <gmp.h>
+#include <cstring>
+#include <vector>
+#include <string>
 
 std::vector<uint8_t> decimal_to_target_bytes(const std::string& decimal) {
-    mpz_t target_int;
-    mpz_init(target_int);
-    mpz_set_str(target_int, decimal.c_str(), 10);
+    mpz_t num;
+    mpz_init(num);
+    mpz_set_str(num, decimal.c_str(), 10);
 
-    uint8_t buf[32] = {0};
+    std::vector<uint8_t> target(32, 0);
     size_t count = 0;
-    mpz_export(buf, &count, 1, 1, 1, 0, target_int);
+    mpz_export(target.data(), &count, 1, 1, 1, 0, num);
 
-    std::vector<uint8_t> out(32, 0);
-    if (count > 0) {
-        memcpy(out.data() + (32 - count), buf, count);
+    // Pad leading zeros if needed
+    if (count < 32) {
+        size_t diff = 32 - count;
+        std::vector<uint8_t> padded(32, 0);
+        memcpy(padded.data() + diff, target.data(), count);
+        target = padded;
     }
 
-    mpz_clear(target_int);
-    return out;
+    mpz_clear(num);
+    return target;
 }

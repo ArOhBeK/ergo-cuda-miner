@@ -2,10 +2,10 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include <chrono>
 #include <thread>
 #include <iomanip>
+#include <nlohmann/json.hpp>
 #include "stratum_client.h"
 #include "autolykos2_cuda_miner.cuh"
 
@@ -17,17 +17,17 @@ int main() {
         std::cerr << "[ERROR] Failed to open config.json" << std::endl;
         return 1;
     }
-
     json config;
     configFile >> config;
-    std::string mode = config["mode"];
-    std::string address = config["address"];
+
+    std::string mode = config.value("mode", "pool");
+    std::string address = config.value("address", "");
+    std::string poolHost = config["pool"].value("host", "");
+    int poolPort = config["pool"].value("port", 0);
 
     std::cout << "[MAIN] Ergo Miner Starting in " << mode << " mode" << std::endl;
 
     if (mode == "pool") {
-        std::string poolHost = config["pool"]["host"];
-        int poolPort = config["pool"]["port"];
         std::cout << "[POOL] Connecting to mining pool at " << poolHost << ":" << poolPort << std::endl;
 
         StratumClient client(poolHost, poolPort, address);
@@ -37,7 +37,7 @@ int main() {
         }
 
         if (!client.subscribe_and_authorize()) {
-            std::cerr << "[POOL] Subscription/authorization failed." << std::endl;
+            std::cerr << "[POOL] Failed to connect to pool." << std::endl;
             return 1;
         }
 
@@ -50,9 +50,10 @@ int main() {
 
             std::cout << "[JOB] Mining job: " << job.job_id << std::endl;
 
+            // Mining loop
             uint64_t baseNonce = 0;
             const uint64_t pageSize = 65536;
-            const uint64_t maxRange = 1 << 24; // ~16M nonces/job
+            const uint64_t maxRange = 1 << 24; // ~16M nonces per job
 
             bool found = false;
             uint64_t foundNonce = 0;
@@ -63,17 +64,16 @@ int main() {
 
             for (uint64_t offset = 0; offset < maxRange; offset += pageSize) {
                 uint64_t nonceStart = baseNonce + offset;
-                // Use the pool share_target for GPU mining!
                 if (launchMiningKernel(
                         job.header_hash.data(),
                         job.share_target.data(),
                         nonceStart,
                         pageSize,
                         foundNonce,
-                        foundHash
-                    )) {
+                        foundHash))
+                {
                     found = true;
-                    totalHashes += (foundNonce - nonceStart + 1); // Only count up to the found nonce
+                    totalHashes += (foundNonce - nonceStart + 1);
                     break;
                 }
                 totalHashes += pageSize;
@@ -98,15 +98,9 @@ int main() {
 
             std::cout << client.get_gpu_stats();
         }
-    } else if (mode == "solo") {
-        std::string nodeHost = config["solo"]["host"];
-        int nodePort = config["solo"]["port"];
-        std::cout << "[SOLO] Connecting to Ergo node at " << nodeHost << ":" << nodePort << std::endl;
-        // TODO: Implement solo mining loop
     } else {
         std::cerr << "[ERROR] Unknown mode in config.json" << std::endl;
         return 1;
     }
-
     return 0;
 }

@@ -1,0 +1,11 @@
+.gpu-monitoring {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px;
+  text-align: left;
+}
+
+.gpu-monitoring h2 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}

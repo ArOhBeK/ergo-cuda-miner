@@ -1,0 +1,11 @@
+.mining-stats {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px;
+  text-align: left;
+}
+
+.mining-stats h2 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
